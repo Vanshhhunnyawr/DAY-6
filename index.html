@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Through the Cosmos - Day 6</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CORE CONFIGURATION & RESET --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            font-family: 'Montserrat', sans-serif;
+            color: #ffffff;
+        }
+
+        /* --- BACKGROUND STARFIELD --- */
+        .starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite alternate;
+            opacity: var(--opacity);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.1; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 8px #fff; }
+        }
+
+        /* --- COSMIC LAYERS (THE ZOOM ENGINE) --- */
+        .cosmic-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 2;
+            opacity: 0;
+            /* Starts zoomed in heavily to create a massive pull-back effect */
+            transform: scale(2); 
+            transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 3s ease;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+
+        /* Authentic Real Space Imagery */
+        .layer-solar {
+            /* High-res starry nebula field representing the local system */
+            background-image: url('https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop');
+        }
+
+        .layer-galaxy {
+            /* Stunning realistic spiral galaxy */
+            background-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1920&auto=format&fit=crop');
+        }
+
+        .layer-universe {
+            /* The actual NASA James Webb Deep Field Image (Real Universe) */
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Webb%27s_First_Deep_Field.jpg/1920px-Webb%27s_First_Deep_Field.jpg');
+        }
+
+        /* Layer States */
+        .layer.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .layer.zoom-out {
+            opacity: 0 !important;
+            transform: scale(0.2) !important; /* Shrinks into the abyss */
+        }
+
+        /* STAGE 0: EARTH (Special 3D CSS Sphere) */
+        .earth-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            z-index: 3;
+            transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 2.5s ease;
+            will-change: transform, opacity;
+        }
+
+        .earth-body {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/c/c4/Earthmap1000x500compac.jpg') repeat-x;
+            background-size: cover;
+            box-shadow: 
+                inset -30px -30px 50px rgba(0, 0, 0, 0.9), 
+                0 0 80px rgba(0, 162, 255, 0.6),
+                0 0 25px rgba(255, 255, 255, 0.4);
+            animation: rotateEarth 20s linear infinite;
+        }
+
+        @keyframes rotateEarth {
+            0% { background-position: 0 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .earth-container.zoom-out {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.02);
+        }
+
+        /* --- FLOATING PHOTO REVEALS --- */
+        .photo-stage {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glass-card {
+            position: absolute;
+            width: 280px;
+            height: 380px;
+            border-radius: 20px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 183, 206, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 25px 60px rgba(0,0,0,1), 0 0 40px rgba(255, 183, 206, 0.4);
+            opacity: 0;
+            transition: opacity 1.2s ease, transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: transform, opacity;
+        }
+
+        .glass-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .card-right { right: 15%; transform: translateX(120px) translateY(30px) scale(0.8) rotate(6deg); }
+        .card-left { left: 15%; transform: translateX(-120px) translateY(30px) scale(0.8) rotate(-6deg); }
+
+        .glass-card.show {
+            opacity: 1;
+            transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+        }
+
+        /* --- SMART PRELOADER START BUTTON --- */
+        .start-btn {
+            position: absolute;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 183, 206, 0.6);
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            box-shadow: 0 0 25px rgba(255, 183, 206, 0.3);
+        }
+
+        .start-btn:hover:not(:disabled) {
+            background: #ffb7ce;
+            color: #010103;
+            box-shadow: 0 0 40px rgba(255, 183, 206, 0.8);
+            transform: translateX(-50%) translateY(-5px) scale(1.05);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.3);
+            animation: pulseLoading 1.5s infinite alternate;
+        }
+
+        @keyframes pulseLoading {
+            0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+            100% { box-shadow: 0 0 25px rgba(255, 255, 255, 0.4); }
+        }
+
+        .start-btn.hide {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(30px);
+        }
+
+        /* --- FINALE VIDEO PLAYER --- */
+        .video-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2.5s ease;
+        }
+
+        .video-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .video-frame {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            border-radius: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 183, 206, 0.8);
+            box-shadow: 0 40px 80px rgba(0,0,0,1), 0 0 60px rgba(255, 183, 206, 0.5);
+            transform: scale(0.9);
+            transition: transform 2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .video-overlay.show .video-frame {
+            transform: scale(1);
+        }
+
+        .video-frame video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+            background-color: #000;
+        }
+
+        .mute-btn {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 15, 25, 0.8);
+            border: 1px solid rgba(255, 183, 206, 0.8);
+            color: #ffffff;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            z-index: 60;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mute-btn:hover {
+            background: #ffb7ce;
+            color: #000000;
+            box-shadow: 0 0 30px rgba(255, 183, 206, 0.8);
+        }
+
+        .mute-btn.audio-on {
+            background: rgba(255, 183, 206, 0.95);
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        /* --- POST VIDEO ENGAGEMENT --- */
+        .engagement-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease;
+        }
+
+        .engagement-layer.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .heart-btn {
+            font-size: 5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 183, 206, 0.6);
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 50px rgba(255, 183, 206, 0.4);
+            animation: pulseHeart 1.5s ease-in-out infinite alternate;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .heart-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 80px rgba(255, 183, 206, 1);
+        }
+
+        @keyframes pulseHeart {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.1); }
+        }
+
+        .final-message {
+            width: 90%;
+            max-width: 850px;
+            padding: 4rem 2rem;
+            background: rgba(10, 8, 20, 0.8);
+            border: 1px solid rgba(255, 183, 206, 0.4);
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,1), inset 0 0 40px rgba(255, 183, 206, 0.1);
+            display: none;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        .final-message.reveal {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .romantic-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            line-height: 1.5;
+            color: #ffffff;
+            background: linear-gradient(135deg, #ffffff 0%, #ffc2d4 50%, #ff7fa5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(255, 183, 206, 0.4));
+        }
+
+        /* --- RESPONSIVE OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            .earth-body { width: 190px; height: 190px; }
+            .glass-card { width: 230px; height: 320px; }
+            
+            .card-right, .card-left {
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) translateY(30px) scale(0.85) rotate(0deg);
+            }
+            
+            .glass-card.show {
+                transform: translateX(-50%) translateY(0) scale(1) rotate(0deg) !important;
+            }
+
+            .romantic-text { font-size: 2.4rem; line-height: 1.4; }
+            .start-btn { font-size: 0.85rem; padding: 1rem 2.5rem; }
+            .mute-btn { bottom: -70px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Starfield Engine -->
+    <div class="starfield" id="starfield"></div>
+
+    <!-- COSMIC IMAGE LAYERS -->
+    <div class="earth-container" id="layerEarth"><div class="earth-body"></div></div>
+    <div class="cosmic-layer layer-solar layer" id="layerSolar"></div>
+    <div class="cosmic-layer layer-galaxy layer" id="layerGalaxy"></div>
+    <div class="cosmic-layer layer-universe layer" id="layerUniverse"></div>
+
+    <!-- PHOTO REVEALS -->
+    <div class="photo-stage">
+        <div class="glass-card card-right" id="photo1">
+            <img src="her-1.jpg" alt="Rubaani Solar System" onerror="this.src='https://picsum.photos/id/1062/300/400';">
+        </div>
+        <div class="glass-card card-left" id="photo2">
+            <img src="her-2.jpg" alt="Rubaani Galaxy" onerror="this.src='https://picsum.photos/id/1025/300/400';">
+        </div>
+        <div class="glass-card card-right" id="photo3">
+            <img src="her-3.jpg" alt="Rubaani Universe" onerror="this.src='https://picsum.photos/id/64/300/400';">
+        </div>
+    </div>
+
+    <!-- SMART PRELOADER BUTTON -->
+    <button class="start-btn" id="startBtn" disabled>Loading Cosmos...</button>
+
+    <!-- FINALE VIDEO EDIT -->
+    <div class="video-overlay" id="videoOverlay">
+        <div class="video-frame">
+            <video id="eyeVideo" playsinline preload="auto">
+                <source src="her-eyes-edit.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- Mute/Unmute Toggle -->
+            <button class="mute-btn" id="muteBtn" onclick="toggleMute(event)">
+                🔈 Tap to Unmute
+            </button>
+        </div>
+    </div>
+
+    <!-- POST-VIDEO ENGAGEMENT -->
+    <div class="engagement-layer" id="engagementLayer">
+        <div class="heart-btn" id="heartBtn" onclick="revealMessage()">💗</div>
+
+        <div class="final-message" id="finalMessage">
+            <p class="romantic-text">
+                "You have the prettiest eyes I can my future in your eyesss hehehehe you r my world hehe I lovee youuu sooo muchh ❤️"
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Starfield Generator
+        const starfield = document.getElementById('starfield');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            const size = Math.random() * 2.5 + 0.5;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${Math.random() * 4 + 1}s`);
+            star.style.setProperty('--opacity', Math.random() * 0.8 + 0.2);
+            starfield.appendChild(star);
+        }
+
+        // Element Selectors
+        const btn = document.getElementById('startBtn');
+        const lEarth = document.getElementById('layerEarth');
+        const lSolar = document.getElementById('layerSolar');
+        const lGalaxy = document.getElementById('layerGalaxy');
+        const lUniverse = document.getElementById('layerUniverse');
+
+        const p1 = document.getElementById('photo1');
+        const p2 = document.getElementById('photo2');
+        const p3 = document.getElementById('photo3');
+
+        const vidOverlay = document.getElementById('videoOverlay');
+        const video = document.getElementById('eyeVideo');
+        const muteBtn = document.getElementById('muteBtn');
+
+        const engageLayer = document.getElementById('engagementLayer');
+        const heartBtn = document.getElementById('heartBtn');
+        const finalMsg = document.getElementById('finalMessage');
+
+        // --- LAG FIX: SMART VIDEO PRELOADER ---
+        video.muted = true; // Auto-play requires muted state
+        
+        // Wait until video has downloaded enough data to play smoothly
+        video.addEventListener('canplaythrough', () => {
+            btn.disabled = false;
+            btn.innerHTML = "Begin Journey";
+        });
+
+        // Fallback in case `canplaythrough` doesn't fire fast enough on mobile
+        setTimeout(() => {
+            if (btn.disabled) {
+                btn.disabled = false;
+                btn.innerHTML = "Begin Journey";
+            }
+        }, 4000);
+
+        // Audio Toggle Controller
+        function toggleMute(e) {
+            e.stopPropagation();
+            if (video.muted) {
+                video.muted = false;
+                muteBtn.innerHTML = "🔊 Audio On";
+                muteBtn.classList.add('audio-on');
+            } else {
+                video.muted = true;
+                muteBtn.innerHTML = "🔈 Tap to Unmute";
+                muteBtn.classList.remove('audio-on');
+            }
+        }
+
+        // --- THE MASTER COSMIC TIMELINE ENGINE ---
+        btn.addEventListener('click', () => {
+            btn.classList.add('hide'); // Hide Start Button
+
+            // 0.5s -> Shrink Earth, Reveal Solar System
+            setTimeout(() => {
+                lEarth.classList.add('zoom-out');
+                lSolar.classList.add('active');
+            }, 500);
+
+            // 1.8s -> Reveal Photo 1 (Right)
+            setTimeout(() => { p1.classList.add('show'); }, 1800);
+
+            // 4.5s -> Hide Photo 1
+            setTimeout(() => { p1.classList.remove('show'); }, 4500);
+
+            // 5.5s -> Zoom past Solar System, Reveal Galaxy
+            setTimeout(() => {
+                lSolar.classList.remove('active');
+                lSolar.classList.add('zoom-out');
+                lGalaxy.classList.add('active');
+            }, 5500);
+
+            // 6.8s -> Reveal Photo 2 (Left)
+            setTimeout(() => { p2.classList.add('show'); }, 6800);
+
+            // 9.5s -> Hide Photo 2
+            setTimeout(() => { p2.classList.remove('show'); }, 9500);
+
+            // 10.5s -> Zoom past Galaxy, Reveal Universe
+            setTimeout(() => {
+                lGalaxy.classList.remove('active');
+                lGalaxy.classList.add('zoom-out');
+                lUniverse.classList.add('active');
+            }, 10500);
+
+            // 11.8s -> Reveal Photo 3 (Right)
+            setTimeout(() => { p3.classList.add('show'); }, 11800);
+
+            // 14.5s -> Hide Photo 3
+            setTimeout(() => { p3.classList.remove('show'); }, 14500);
+
+            // 15.5s -> Fade to Video Player & KILL BACKGROUND CPU LOAD (Lag Fix)
+            setTimeout(() => {
+                lUniverse.classList.remove('active');
+                lUniverse.classList.add('zoom-out');
+                
+                vidOverlay.classList.add('show');
+                video.play().catch(e => console.log('Autoplay handled by mute'));
+
+                // The Ultimate Lag Fix: Purge DOM rendering of heavy elements once they are hidden
+                setTimeout(() => {
+                    lEarth.style.display = 'none';
+                    lSolar.style.display = 'none';
+                    lGalaxy.style.display = 'none';
+                    lUniverse.style.display = 'none';
+                    starfield.style.display = 'none';
+                }, 3000); // 3 seconds after video fade-in
+
+            }, 15500);
+        });
+
+        // Detect Video End -> Trigger Engagement
+        video.addEventListener('ended', () => {
+            engageLayer.classList.add('show');
+        });
+
+        // Final Heart Button Click -> Reveal Romantic Message
+        function revealMessage() {
+            heartBtn.style.display = 'none';
+            finalMsg.style.display = 'block';
+
+            setTimeout(() => {
+                finalMsg.classList.add('reveal');
+            }, 50);
+        }
+    </script>
+</body>
+</html>
